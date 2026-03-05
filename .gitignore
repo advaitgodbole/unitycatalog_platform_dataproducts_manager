@@ -205,3 +205,50 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# =============================================================================
+# DPVM Project-Specific
+# =============================================================================
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+*.tfplan
+terraform/data-products/*.tf
+!terraform/data-products/.gitkeep
+
+# Terraform credentials & secrets
+*.auto.tfvars
+!terraform/environments/*.tfvars
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
+# Lakebase / Postgres local dev
+*.sql.bak
+
+# Secrets & credentials
+*.pem
+*.key
+.env.local
+.env.*.local
+secrets/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated configs (local only, CI generates fresh)
+configs/**/generated/
