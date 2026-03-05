@@ -115,6 +115,40 @@ MIGRATIONS: list[str] = [
     CREATE INDEX IF NOT EXISTS idx_platform_credentials_env ON dpvm.platform_credentials(environment);
     CREATE INDEX IF NOT EXISTS idx_admin_users_role ON dpvm.admin_users(role);
     """,
+    # V4: ODCS data contracts
+    """
+    CREATE TABLE IF NOT EXISTS dpvm.data_contracts (
+        id                                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id                          UUID NOT NULL REFERENCES dpvm.products(id),
+        version                             VARCHAR(32) NOT NULL,
+        status                              VARCHAR(16) NOT NULL DEFAULT 'draft',
+
+        description_purpose                 TEXT NOT NULL DEFAULT '',
+        description_usage                   TEXT NOT NULL DEFAULT '',
+        description_limitations             TEXT NOT NULL DEFAULT '',
+        description_custom_properties       JSONB NOT NULL DEFAULT '[]',
+        description_authoritative_definitions JSONB NOT NULL DEFAULT '[]',
+
+        schema_definition                   JSONB NOT NULL DEFAULT '[]',
+        servers                             JSONB NOT NULL DEFAULT '[]',
+        sla_properties                      JSONB NOT NULL DEFAULT '[]',
+        quality_rules                       JSONB NOT NULL DEFAULT '[]',
+        price_amount                        DECIMAL DEFAULT 0,
+        price_currency                      VARCHAR(8) DEFAULT 'USD',
+        price_unit                          VARCHAR(16) DEFAULT 'monthly',
+        custom_properties                   JSONB NOT NULL DEFAULT '[]',
+
+        created_by                          VARCHAR(256) NOT NULL,
+        created_at                          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at                          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+        UNIQUE (product_id, version)
+    );
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_data_contracts_product ON dpvm.data_contracts(product_id);
+    CREATE INDEX IF NOT EXISTS idx_data_contracts_status ON dpvm.data_contracts(status);
+    """,
 ]
 
 

@@ -7,6 +7,9 @@ import type {
   AppSettings,
   AuditLogListResponse,
   CurrentUser,
+  DataContract,
+  DataContractCreate,
+  DataContractListResponse,
   DataProduct,
   DataProductCreate,
   DataProductListResponse,
@@ -78,6 +81,45 @@ export const api = {
       return request<AccessRequest>(`/access/${id}/approve`, {
         method: "POST",
         body: JSON.stringify(data),
+      });
+    },
+  },
+
+  contracts: {
+    list(productId: string) {
+      return request<DataContractListResponse>(
+        `/products/${productId}/contracts`
+      );
+    },
+    latest(productId: string) {
+      return request<DataContract>(
+        `/products/${productId}/contracts/latest`
+      );
+    },
+    create(productId: string, data: DataContractCreate) {
+      return request<DataContract>(`/products/${productId}/contracts`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    update(productId: string, contractId: string, data: Partial<DataContractCreate>) {
+      return request<DataContract>(
+        `/products/${productId}/contracts/${contractId}`,
+        { method: "PUT", body: JSON.stringify(data) }
+      );
+    },
+    activate(productId: string, contractId: string) {
+      return request<DataContract>(
+        `/products/${productId}/contracts/${contractId}/activate`,
+        { method: "POST" }
+      );
+    },
+    exportYaml(productId: string, contractId: string) {
+      return fetch(
+        `${BASE}/products/${productId}/contracts/${contractId}/export`
+      ).then((res) => {
+        if (!res.ok) throw new Error(`Export failed: ${res.status}`);
+        return res.text();
       });
     },
   },

@@ -178,3 +178,143 @@ export interface AppSettings {
   github_base_branch: string;
   cors_origins: string[];
 }
+
+// ---- ODCS Data Contract types ----
+
+export type ContractStatus = "draft" | "active" | "deprecated";
+
+export type LogicalType =
+  | "string"
+  | "integer"
+  | "decimal"
+  | "boolean"
+  | "date"
+  | "timestamp"
+  | "array"
+  | "object";
+
+export interface LogicalTypeOptions {
+  minLength?: number;
+  maxLength?: number;
+  minimum?: number;
+  maximum?: number;
+  format?: string;
+}
+
+export interface QualityRule {
+  type: string;
+  description: string;
+  metric?: string;
+  mustBe?: number;
+  mustBeGreaterThan?: number;
+  mustBeLessThan?: number;
+  arguments?: Record<string, unknown>;
+}
+
+export interface ColumnRelationship {
+  type: string;
+  to: string;
+}
+
+export interface AuthoritativeDefinition {
+  url: string;
+  type: string;
+  description: string;
+}
+
+export interface CustomProperty {
+  property: string;
+  value: string;
+  description: string;
+}
+
+export interface ContractSchemaColumn {
+  name: string;
+  logicalType: LogicalType;
+  physicalType: string;
+  description: string;
+  businessName: string;
+  required: boolean;
+  primaryKey: boolean;
+  unique: boolean;
+  classification: string | null;
+  criticalDataElement: boolean;
+  examples: string[];
+  tags: string[];
+  logicalTypeOptions?: LogicalTypeOptions;
+  quality: QualityRule[];
+  relationships: ColumnRelationship[];
+  authoritativeDefinitions: AuthoritativeDefinition[];
+}
+
+export interface ContractSchemaTable {
+  name: string;
+  physicalType: string;
+  description: string;
+  properties: ContractSchemaColumn[];
+  quality: QualityRule[];
+}
+
+export interface ServerDefinition {
+  server: string;
+  environment: string;
+  type: string;
+  host: string;
+  port?: number;
+  database: string;
+  schema: string;
+}
+
+export interface SLAProperty {
+  property: string;
+  value: string;
+  unit?: string;
+  description: string;
+}
+
+export interface ContractPrice {
+  priceAmount: number;
+  priceCurrency: string;
+  priceUnit: string;
+}
+
+export interface DataContract {
+  id: string;
+  product_id: string;
+  version: string;
+  status: ContractStatus;
+  description_purpose: string;
+  description_usage: string;
+  description_limitations: string;
+  description_custom_properties: CustomProperty[];
+  description_authoritative_definitions: AuthoritativeDefinition[];
+  schema_definition: ContractSchemaTable[];
+  servers: ServerDefinition[];
+  sla_properties: SLAProperty[];
+  quality_rules: QualityRule[];
+  price: ContractPrice | null;
+  custom_properties: CustomProperty[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DataContractCreate {
+  version: string;
+  description_purpose: string;
+  description_usage: string;
+  description_limitations: string;
+  description_custom_properties: CustomProperty[];
+  description_authoritative_definitions: AuthoritativeDefinition[];
+  schema_definition: ContractSchemaTable[];
+  servers: ServerDefinition[];
+  sla_properties: SLAProperty[];
+  quality_rules: QualityRule[];
+  price?: ContractPrice;
+  custom_properties: CustomProperty[];
+}
+
+export interface DataContractListResponse {
+  items: DataContract[];
+  total: number;
+}

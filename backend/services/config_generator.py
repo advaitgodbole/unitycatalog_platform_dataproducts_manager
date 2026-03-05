@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
+from typing import Optional
+
 import yaml
 
+from backend.models.data_contract import DataContractResponse
 from backend.models.data_product import DataProductCreate, catalog_name_for
 
 
-def generate_config(product: DataProductCreate, created_by: str) -> str:
+def generate_config(
+    product: DataProductCreate,
+    created_by: str,
+    contract: Optional[DataContractResponse] = None,
+) -> str:
     catalog_name = catalog_name_for(product.owning_domain.value, product.environment.value)
 
     config = {
@@ -51,6 +58,29 @@ def generate_config(product: DataProductCreate, created_by: str) -> str:
         config["data_product"]["snowflake_account_url"] = product.snowflake_account_url
     if product.target_platform.value == "glue" and product.glue_catalog_arn:
         config["data_product"]["glue_catalog_arn"] = product.glue_catalog_arn
+
+    if contract:
+        contract_summary = {
+            "odcs_version": "v3.1.0",
+            "contract_version": contract.version,
+            "contract_status": contract.status.value,
+        }
+        if contract.description_purpose:
+            contract_summary["purpose"] = contract.description_purpose
+        if contract.sla_properties:
+            contract_summary["sla_properties"] = [
+                {"property": sp.property, "value": sp.value}
+                for sp in contract.sla_properties
+            ]
+        if contract.schema_definition:
+            contract_summary["tables"] = [
+                {
+                    "name": t.name,
+                    "column_count": len(t.properties),
+                }
+                for t in contract.schema_definition
+            ]
+        config["data_product"]["data_contract"] = contract_summary
 
     return yaml.dump(config, default_flow_style=False, sort_keys=False)
 

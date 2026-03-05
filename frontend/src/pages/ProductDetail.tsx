@@ -3,16 +3,20 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ExternalLink,
+  FileText,
   GitPullRequest,
   Loader2,
+  Plus,
   Trash2,
   UserPlus,
 } from "lucide-react";
 import { api } from "@/api/client";
 import StatusBadge from "@/components/StatusBadge";
 import ClassificationTag from "@/components/ClassificationTag";
+import ContractViewer from "@/components/ContractViewer";
+import ContractEditor from "@/components/ContractEditor";
 import { useState } from "react";
-import type { AccessLevel } from "@/types";
+import type { AccessLevel, DataContractCreate } from "@/types";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -21,10 +25,18 @@ export default function ProductDetail() {
   const [showAccessForm, setShowAccessForm] = useState(false);
   const [accessLevel, setAccessLevel] = useState<AccessLevel>("read");
   const [justification, setJustification] = useState("");
+  const [showContractEditor, setShowContractEditor] = useState(false);
+  const [editingContract, setEditingContract] = useState(false);
 
   const { data: product, isLoading } = useQuery({
     queryKey: ["product", id],
     queryFn: () => api.products.get(id!),
+    enabled: !!id,
+  });
+
+  const { data: contract, isLoading: contractLoading } = useQuery({
+    queryKey: ["contract", id],
+    queryFn: () => api.contracts.latest(id!).catch(() => null),
     enabled: !!id,
   });
 
@@ -44,6 +56,29 @@ export default function ProductDetail() {
       setShowAccessForm(false);
       setJustification("");
     },
+  });
+
+  const createContractMutation = useMutation({
+    mutationFn: (data: DataContractCreate) => api.contracts.create(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contract", id] });
+      setShowContractEditor(false);
+      setEditingContract(false);
+    },
+  });
+
+  const updateContractMutation = useMutation({
+    mutationFn: (data: DataContractCreate) =>
+      api.contracts.update(id!, contract!.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contract", id] });
+      setEditingContract(false);
+    },
+  });
+
+  const activateContractMutation = useMutation({
+    mutationFn: () => api.contracts.activate(id!, contract!.id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contract", id] }),
   });
 
   if (isLoading) {
@@ -137,6 +172,89 @@ export default function ProductDetail() {
             </a>
           )}
         </div>
+      </div>
+
+      {/* Data Contract Section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        {contractLoading ? (
+          <div className="text-center py-6 text-gray-400">
+            <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+          </div>
+        ) : showContractEditor || editingContract ? (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {editingContract ? "Edit Contract" : "Create Data Contract"}
+              </h2>
+              <button
+                onClick={() => { setShowContractEditor(false); setEditingContract(false); }}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+            <ContractEditor
+              initial={editingContract && contract ? {
+                version: contract.version,
+                description_purpose: contract.description_purpose,
+                description_usage: contract.description_usage,
+                description_limitations: contract.description_limitations,
+                description_custom_properties: contract.description_custom_properties,
+                description_authoritative_definitions: contract.description_authoritative_definitions,
+                schema_definition: contract.schema_definition,
+                servers: contract.servers,
+                sla_properties: contract.sla_properties,
+                quality_rules: contract.quality_rules,
+                price: contract.price ?? undefined,
+                custom_properties: contract.custom_properties,
+              } : undefined}
+              onSave={(data) => {
+                if (editingContract && contract) {
+                  updateContractMutation.mutate(data);
+                } else {
+                  createContractMutation.mutate(data);
+                }
+              }}
+              saving={createContractMutation.isPending || updateContractMutation.isPending}
+            />
+          </div>
+        ) : contract ? (
+          <ContractViewer
+            contract={contract}
+            product={product}
+            onEdit={contract.status === "draft" ? () => setEditingContract(true) : undefined}
+            onNewVersion={() => setShowContractEditor(true)}
+            onActivate={contract.status === "draft" ? () => activateContractMutation.mutate() : undefined}
+            activating={activateContractMutation.isPending}
+            onExport={() => {
+              api.contracts.exportYaml(id!, contract.id).then((yaml) => {
+                const blob = new Blob([yaml], { type: "application/x-yaml" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${product.name}_contract_v${contract.version}.yaml`;
+                a.click();
+                URL.revokeObjectURL(url);
+              });
+            }}
+          />
+        ) : (
+          <div className="text-center py-8">
+            <FileText className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">
+              No Data Contract
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Define an ODCS v3.1.0 data contract to document schema, quality, SLAs, and terms of use.
+            </p>
+            <button
+              onClick={() => setShowContractEditor(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium hover:bg-brand-700"
+            >
+              <Plus className="w-4 h-4" /> Create Contract
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Access Management */}
