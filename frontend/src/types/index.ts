@@ -13,6 +13,14 @@ export type ProductStatus =
   | "update_in_progress"
   | "deprecated"
   | "failed";
+export type UserRole = "producer" | "steward" | "admin";
+
+export interface CurrentUser {
+  email: string;
+  role: UserRole;
+  role_display: string;
+}
+
 export type AccessLevel = "read" | "write";
 export type AccessRequestStatus = "pending" | "approved" | "denied";
 

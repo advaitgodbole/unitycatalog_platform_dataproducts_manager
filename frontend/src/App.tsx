@@ -9,15 +9,29 @@ import Dashboard from "./pages/Dashboard";
 import CreateWizard from "./pages/CreateWizard";
 import ProductDetail from "./pages/ProductDetail";
 import AccessRequests from "./pages/AccessRequests";
+import UserBadge, { useCurrentUser } from "./components/UserBadge";
+import type { UserRole } from "./types";
 
-const NAV_ITEMS = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+  roles?: UserRole[];
+}
+
+const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/create", label: "Create Product", icon: Plus },
-  { to: "/access-requests", label: "Access Requests", icon: ShieldCheck },
+  { to: "/create", label: "Create Product", icon: Plus, roles: ["producer", "steward", "admin"] },
+  { to: "/access-requests", label: "Access Requests", icon: ShieldCheck, roles: ["steward", "admin"] },
 ];
 
 export default function App() {
   const location = useLocation();
+  const { data: user } = useCurrentUser();
+
+  const visibleNav = NAV_ITEMS.filter(
+    (item) => !item.roles || !user || item.roles.includes(user.role)
+  );
 
   return (
     <div className="min-h-screen flex">
@@ -32,7 +46,7 @@ export default function App() {
           </p>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => {
+          {visibleNav.map(({ to, label, icon: Icon }) => {
             const active =
               to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
             return (
@@ -51,7 +65,10 @@ export default function App() {
             );
           })}
         </nav>
-        <div className="px-6 py-4 border-t border-white/10 text-xs text-white/50">
+        <div className="border-t border-white/10">
+          <UserBadge />
+        </div>
+        <div className="px-6 py-3 text-xs text-white/50">
           v0.1.0
         </div>
       </aside>

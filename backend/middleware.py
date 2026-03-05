@@ -22,8 +22,16 @@ class Role(str, Enum):
     ADMIN = "admin"
 
 
+ROLE_DISPLAY: dict[Role, str] = {
+    Role.PRODUCER: "Data Engineer",
+    Role.STEWARD: "Data Steward",
+    Role.ADMIN: "Platform Admin",
+}
+
+
 ROLE_PERMISSIONS: dict[Role, set[str]] = {
     Role.PRODUCER: {
+        "GET /api/me",
         "POST /api/products",
         "GET /api/products",
         "GET /api/products/{id}",
@@ -35,6 +43,7 @@ ROLE_PERMISSIONS: dict[Role, set[str]] = {
         "GET /api/health",
     },
     Role.STEWARD: {
+        "GET /api/me",
         "POST /api/products",
         "GET /api/products",
         "GET /api/products/{id}",
@@ -98,8 +107,11 @@ class AuthMiddleware(BaseHTTPMiddleware):
         email = (
             request.headers.get("x-forwarded-email")
             or request.headers.get("x-forwarded-user")
-            or "anonymous@local"
         )
+        if not email:
+            from backend.config import IS_DATABRICKS_APP, get_local_user_email
+
+            email = "anonymous@local" if IS_DATABRICKS_APP else get_local_user_email()
 
         request.state.user_email = email
         role = _resolve_role(email)
