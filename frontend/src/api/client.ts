@@ -1,6 +1,7 @@
 import type {
   AccessRequest,
   AccessRequestListResponse,
+  CurrentUser,
   DataProduct,
   DataProductCreate,
   DataProductListResponse,
@@ -79,6 +80,10 @@ export const api = {
         `/catalog/schemas?catalog_name=${catalogName}`
       );
     },
+  },
+
+  me() {
+    return request<CurrentUser>("/me");
   },
 
   health() {

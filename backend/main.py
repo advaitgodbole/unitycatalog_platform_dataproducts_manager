@@ -2,13 +2,13 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from backend.config import get_settings
-from backend.middleware import AuthMiddleware
+from backend.middleware import AuthMiddleware, ROLE_DISPLAY, _resolve_role
 from backend.routers import products, access, catalog, webhooks
 
 logger = logging.getLogger(__name__)
@@ -52,6 +52,17 @@ app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "version": app.version}
+
+
+@app.get("/api/me")
+async def current_user(request: Request):
+    email = getattr(request.state, "user_email", "anonymous@local")
+    role = getattr(request.state, "user_role", _resolve_role(email))
+    return {
+        "email": email,
+        "role": role.value,
+        "role_display": ROLE_DISPLAY.get(role, role.value),
+    }
 
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "frontend" / "dist"

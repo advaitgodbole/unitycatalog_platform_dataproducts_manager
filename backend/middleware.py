@@ -22,8 +22,16 @@ class Role(str, Enum):
     ADMIN = "admin"
 
 
+ROLE_DISPLAY: dict[Role, str] = {
+    Role.PRODUCER: "Data Engineer",
+    Role.STEWARD: "Data Steward",
+    Role.ADMIN: "Platform Admin",
+}
+
+
 ROLE_PERMISSIONS: dict[Role, set[str]] = {
     Role.PRODUCER: {
+        "GET /api/me",
         "POST /api/products",
         "GET /api/products",
         "GET /api/products/{id}",
@@ -35,6 +43,7 @@ ROLE_PERMISSIONS: dict[Role, set[str]] = {
         "GET /api/health",
     },
     Role.STEWARD: {
+        "GET /api/me",
         "POST /api/products",
         "GET /api/products",
         "GET /api/products/{id}",
