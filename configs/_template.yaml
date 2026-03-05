@@ -1,0 +1,31 @@
+data_product:
+  name: "{{ name }}"
+  display_name: "{{ display_name }}"
+  owning_domain: "{{ owning_domain }}"
+  catalog: "{{ owning_domain }}_prod"
+  schema: "{{ name }}"
+  classification: "{{ classification }}"
+  cost_center: "{{ cost_center }}"
+  description: "{{ description }}"
+  target_platform: "{{ target_platform }}"
+  created_by: "{{ created_by }}"
+
+  iam:
+    owner_service_principal: "spn-{{ name }}"
+    groups:
+      read: "{{ name }}_read"
+      write: "{{ name }}_write"
+    members:
+      read: []
+      write: []
+
+  compute:
+    cluster_policy: "default"
+    sql_warehouse: false
+
+  tags:
+    domain: "{{ owning_domain }}"
+    classification: "{{ classification }}"
+    cost_center: "{{ cost_center }}"
+
+  status: "active"
