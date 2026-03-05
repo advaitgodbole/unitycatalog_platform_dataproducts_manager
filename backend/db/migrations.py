@@ -85,6 +85,36 @@ MIGRATIONS: list[str] = [
         NULL;
     END $$;
     """,
+    # V3: admin interface tables
+    """
+    CREATE TABLE IF NOT EXISTS dpvm.platform_credentials (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        platform        VARCHAR(32) NOT NULL,
+        environment     VARCHAR(16) NOT NULL,
+        credential_name VARCHAR(128) NOT NULL,
+        config          JSONB NOT NULL DEFAULT '{}',
+        is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+        created_by      VARCHAR(256) NOT NULL,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (platform, environment, credential_name)
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS dpvm.admin_users (
+        id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email           VARCHAR(256) NOT NULL UNIQUE,
+        role            VARCHAR(16) NOT NULL DEFAULT 'producer',
+        granted_by      VARCHAR(256) NOT NULL,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS idx_platform_credentials_platform ON dpvm.platform_credentials(platform);
+    CREATE INDEX IF NOT EXISTS idx_platform_credentials_env ON dpvm.platform_credentials(environment);
+    CREATE INDEX IF NOT EXISTS idx_admin_users_role ON dpvm.admin_users(role);
+    """,
 ]
 
 

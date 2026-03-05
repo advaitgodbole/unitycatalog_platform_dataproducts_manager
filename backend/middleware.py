@@ -57,8 +57,10 @@ ROLE_PERMISSIONS: dict[Role, set[str]] = {
         "GET /api/catalog/schemas/{catalog_name}/{schema_name}",
         "GET /api/health",
     },
-    Role.ADMIN: {"*"},
+    Role.ADMIN: {"*"},  # includes all /api/admin/* routes
 }
+
+ADMIN_ONLY_PREFIXES = ("/api/admin",)
 
 
 def _resolve_role(_email: str) -> Role:
@@ -116,6 +118,18 @@ class AuthMiddleware(BaseHTTPMiddleware):
         request.state.user_email = email
         role = _resolve_role(email)
         request.state.user_role = role
+
+        if any(request.url.path.startswith(p) for p in ADMIN_ONLY_PREFIXES):
+            if role != Role.ADMIN:
+                logger.warning(
+                    "Admin-only denied: %s %s for %s (role=%s)",
+                    request.method,
+                    request.url.path,
+                    email,
+                    role.value,
+                )
+                raise HTTPException(status_code=403, detail="Admin access required")
+            return await call_next(request)
 
         permissions = ROLE_PERMISSIONS.get(role, set())
         if not _matches_permission(request.method, request.url.path, permissions):

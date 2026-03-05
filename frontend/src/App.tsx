@@ -4,11 +4,17 @@ import {
   Plus,
   ShieldCheck,
   Database,
+  Settings,
 } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
 import CreateWizard from "./pages/CreateWizard";
 import ProductDetail from "./pages/ProductDetail";
 import AccessRequests from "./pages/AccessRequests";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import CredentialsManager from "./pages/admin/CredentialsManager";
+import UserManager from "./pages/admin/UserManager";
+import AuditLog from "./pages/admin/AuditLog";
 import UserBadge, { useCurrentUser } from "./components/UserBadge";
 import type { UserRole } from "./types";
 
@@ -23,6 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/create", label: "Create Product", icon: Plus, roles: ["producer", "steward", "admin"] },
   { to: "/access-requests", label: "Access Requests", icon: ShieldCheck, roles: ["steward", "admin"] },
+  { to: "/admin", label: "Admin Console", icon: Settings, roles: ["admin"] },
 ];
 
 export default function App() {
@@ -45,7 +52,7 @@ export default function App() {
             Data Product Vending Machine
           </p>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {visibleNav.map(({ to, label, icon: Icon }) => {
             const active =
               to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
@@ -80,6 +87,12 @@ export default function App() {
             <Route path="/create" element={<CreateWizard />} />
             <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/access-requests" element={<AccessRequests />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="credentials" element={<CredentialsManager />} />
+              <Route path="users" element={<UserManager />} />
+              <Route path="audit-log" element={<AuditLog />} />
+            </Route>
           </Routes>
         </div>
       </main>

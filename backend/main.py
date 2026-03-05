@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse
 
 from backend.config import get_settings
 from backend.middleware import AuthMiddleware, ROLE_DISPLAY, _resolve_role
-from backend.routers import products, access, catalog, webhooks
+from backend.routers import products, access, catalog, webhooks, admin
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -47,6 +47,7 @@ app.include_router(products.router, prefix="/api/products", tags=["products"])
 app.include_router(access.router, prefix="/api/access", tags=["access"])
 app.include_router(catalog.router, prefix="/api/catalog", tags=["catalog"])
 app.include_router(webhooks.router, prefix="/api/webhooks", tags=["webhooks"])
+app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 
 
 @app.get("/api/health")

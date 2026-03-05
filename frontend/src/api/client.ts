@@ -1,10 +1,20 @@
 import type {
   AccessRequest,
   AccessRequestListResponse,
+  AdminUser,
+  AdminUserCreate,
+  AdminUserListResponse,
+  AppSettings,
+  AuditLogListResponse,
   CurrentUser,
   DataProduct,
   DataProductCreate,
   DataProductListResponse,
+  PlatformCredential,
+  PlatformCredentialCreate,
+  PlatformCredentialListResponse,
+  SystemOverview,
+  TestCredentialResult,
 } from "@/types";
 
 const BASE = "/api";
@@ -21,6 +31,7 @@ async function request<T>(
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `Request failed: ${res.status}`);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
@@ -88,5 +99,68 @@ export const api = {
 
   health() {
     return request<{ status: string; version: string }>("/health");
+  },
+
+  admin: {
+    credentials: {
+      list(params?: Record<string, string>) {
+        const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+        return request<PlatformCredentialListResponse>(`/admin/credentials${qs}`);
+      },
+      get(id: string) {
+        return request<PlatformCredential>(`/admin/credentials/${id}`);
+      },
+      create(data: PlatformCredentialCreate) {
+        return request<PlatformCredential>("/admin/credentials", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+      },
+      update(id: string, data: Partial<PlatformCredential>) {
+        return request<PlatformCredential>(`/admin/credentials/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        });
+      },
+      delete(id: string) {
+        return request<void>(`/admin/credentials/${id}`, { method: "DELETE" });
+      },
+      test(id: string) {
+        return request<TestCredentialResult>(`/admin/credentials/${id}/test`, {
+          method: "POST",
+        });
+      },
+    },
+    users: {
+      list(params?: Record<string, string>) {
+        const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+        return request<AdminUserListResponse>(`/admin/users${qs}`);
+      },
+      create(data: AdminUserCreate) {
+        return request<AdminUser>("/admin/users", {
+          method: "POST",
+          body: JSON.stringify(data),
+        });
+      },
+      update(id: string, data: { role: string }) {
+        return request<AdminUser>(`/admin/users/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        });
+      },
+      delete(id: string) {
+        return request<void>(`/admin/users/${id}`, { method: "DELETE" });
+      },
+    },
+    auditLog(params?: Record<string, string>) {
+      const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+      return request<AuditLogListResponse>(`/admin/audit-log${qs}`);
+    },
+    overview() {
+      return request<SystemOverview>("/admin/overview");
+    },
+    settings() {
+      return request<AppSettings>("/admin/settings");
+    },
   },
 };
