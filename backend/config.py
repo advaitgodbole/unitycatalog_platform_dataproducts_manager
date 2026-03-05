@@ -65,5 +65,20 @@ def get_oauth_token() -> str:
 
 
 @lru_cache
+def get_local_user_email() -> str:
+    """Resolve the current user's email from the Databricks workspace via SCIM.
+
+    Uses the SDK's existing auth (CLI profile or token). Called once and
+    cached for the lifetime of the process.
+    """
+    try:
+        client = get_workspace_client()
+        me = client.current_user.me()
+        return me.user_name or "anonymous@local"
+    except Exception:
+        return "anonymous@local"
+
+
+@lru_cache
 def get_settings() -> Settings:
     return Settings()
